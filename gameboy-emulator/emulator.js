@@ -8,16 +8,16 @@ const CONFIG = {
     CANVAS_WIDTH: 240,
     CANVAS_HEIGHT: 160,
     DEFAULT_KEYMAP: {
-        'ArrowUp': 'UP',
-        'ArrowDown': 'DOWN',
-        'ArrowLeft': 'LEFT',
-        'ArrowRight': 'RIGHT',
+        'arrowup': 'UP',
+        'arrowdown': 'DOWN',
+        'arrowleft': 'LEFT',
+        'arrowright': 'RIGHT',
         'z': 'A',
         'x': 'B',
         'q': 'L',
         'w': 'R',
-        'Enter': 'START',
-        'Backspace': 'SELECT'
+        'enter': 'START',
+        'backspace': 'SELECT'
     }
 };
 
@@ -27,6 +27,7 @@ let emulatorState = {
     isPaused: false,
     gameLoaded: false,
     currentRom: null,
+    currentRomUrl: null,
     currentGameTitle: 'Ningún juego cargado',
     keyMap: {},
     pressedKeys: {},
@@ -47,6 +48,7 @@ const DOM = {
     pauseBtn: document.getElementById('pauseBtn'),
     resumeBtn: document.getElementById('resumeBtn'),
     fullscreenBtn: document.getElementById('fullscreenBtn'),
+    powerBtn: document.getElementById('powerBtn'),
     muteBtn: document.getElementById('muteBtn'),
     volumeSlider: document.getElementById('volumeSlider'),
     gbaDevice: document.querySelector('.gba-device')
@@ -90,6 +92,7 @@ function setupEventListeners() {
     DOM.pauseBtn.addEventListener('click', pauseGame);
     DOM.resumeBtn.addEventListener('click', resumeGame);
     DOM.fullscreenBtn.addEventListener('click', toggleFullscreen);
+    DOM.powerBtn.addEventListener('click', togglePower);
 
     // Volume controls
     DOM.muteBtn.addEventListener('click', toggleMute);
@@ -201,8 +204,11 @@ async function handleRomLoad(e) {
     }
 
     try {
+        cleanupEmulator();
+
         // Actualizar estado
         emulatorState.currentRom = file;
+        emulatorState.currentRomUrl = URL.createObjectURL(file);
         emulatorState.currentGameTitle = file.name.replace(/\.[^/.]+$/, '');
         emulatorState.gameLoaded = true;
 
@@ -216,6 +222,7 @@ async function handleRomLoad(e) {
         // Preparar contenedor para EmulatorJS
         const gameContainer = document.createElement('div');
         gameContainer.id = 'ejs-player';
+        gameContainer.classList.add('emulator-screen');
         gameContainer.style.width = '100%';
         gameContainer.style.height = '100%';
         DOM.gameCanvas.parentElement.appendChild(gameContainer);
@@ -223,7 +230,7 @@ async function handleRomLoad(e) {
 
         // Configurar variables globales de EmulatorJS
         window.EJS_player = '#ejs-player';
-        window.EJS_gameUrl = URL.createObjectURL(file);
+        window.EJS_gameUrl = emulatorState.currentRomUrl;
         window.EJS_core = 'gba';
         window.EJS_pathtodata = './data/';
         window.EJS_startOnLoaded = true;
@@ -231,6 +238,7 @@ async function handleRomLoad(e) {
 
         // Cargar loader.js dinámicamente
         const script = document.createElement('script');
+        script.id = 'emulatorjs-loader';
         script.src = './data/loader.js';
         script.onload = () => {
             console.log('✅ EmulatorJS cargado y ROM iniciada');
@@ -328,11 +336,34 @@ function loadVolumeFromStorage() {
 // ==================== GESTIÓN DE TECLADO ====================
 function loadKeymapFromStorage() {
     const saved = localStorage.getItem('gbaKeymap');
-    emulatorState.keyMap = saved ? JSON.parse(saved) : { ...CONFIG.DEFAULT_KEYMAP };
+    const keymap = saved ? JSON.parse(saved) : { ...CONFIG.DEFAULT_KEYMAP };
+    emulatorState.keyMap = normalizeKeymap(keymap);
 }
 
 function saveKeymapToStorage() {
     localStorage.setItem('gbaKeymap', JSON.stringify(emulatorState.keyMap));
+}
+
+function normalizeKeymap(keymap) {
+    return Object.keys(keymap).reduce((acc, key) => {
+        acc[key.toLowerCase()] = keymap[key];
+        return acc;
+    }, {});
+}
+
+function cleanupEmulator() {
+    const existingPlayer = document.getElementById('ejs-player');
+    if (existingPlayer) {
+        existingPlayer.remove();
+    }
+    const existingLoader = document.getElementById('emulatorjs-loader');
+    if (existingLoader) {
+        existingLoader.remove();
+    }
+    if (emulatorState.currentRomUrl) {
+        URL.revokeObjectURL(emulatorState.currentRomUrl);
+        emulatorState.currentRomUrl = null;
+    }
 }
 
 // ==================== UTILIDADES ====================

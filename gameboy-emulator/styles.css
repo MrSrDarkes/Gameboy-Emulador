@@ -111,6 +111,24 @@ body {
     image-rendering: crisp-edges;
 }
 
+.emulator-screen {
+    position: absolute;
+    left: 22.2222%;
+    right: 22.2222%;
+    top: 16.6667%;
+    bottom: 16.6667%;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.emulator-screen canvas,
+.emulator-screen iframe {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
 /* D-Pad */
 .d-pad {
     position: absolute;

@@ -1,0 +1,511 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+}
+
+.emulator-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 1400px;
+}
+
+/* Control Panel */
+.control-panel {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+}
+
+.panel-left, .panel-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.game-title {
+    font-size: 14px;
+    color: #aaa;
+    margin-left: 10px;
+}
+
+/* Botones generales */
+.btn-primary, .btn-secondary {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* GBA Device */
+.gba-device {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 360 / 200; /* Proporción aproximada del GBA en horizontal */
+    background-image: url('gba-device.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 0 auto;
+}
+
+/* Canvas del juego */
+.game-canvas {
+    position: absolute;
+    /* Posicionamiento exacto dentro del SVG screen (x=240/1080, y=100/600, width=600/1080, height=400/600) */
+    left: 22.2222%;
+    right: 22.2222%;
+    top: 16.6667%;
+    bottom: 16.6667%;
+    background: transparent;
+    border: none;
+    border-radius: 2px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* D-Pad */
+.d-pad {
+    position: absolute;
+    top: 45%;
+    left: 8%;
+    width: 12%;
+    height: 30%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 3%;
+}
+
+.d-pad-btn {
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.1s ease;
+    opacity: 0;
+}
+
+.d-pad-up { grid-column: 2; grid-row: 1; }
+.d-pad-down { grid-column: 2; grid-row: 3; }
+.d-pad-left { grid-column: 1; grid-row: 2; }
+.d-pad-right { grid-column: 3; grid-row: 2; }
+
+.d-pad-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.d-pad-btn.pressed {
+    background: rgba(100, 200, 255, 0.6);
+    transform: scale(1.1);
+}
+
+/* Botones de acción A, B */
+.action-buttons {
+    position: absolute;
+    top: 48%;
+    right: 8%;
+    width: 12%;
+    height: 20%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.btn-a, .btn-b {
+    width: 8%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 100, 100, 0.7);
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    opacity: 0;
+}
+
+.btn-b {
+    background: rgba(100, 150, 255, 0.7);
+}
+
+.btn-a:hover, .btn-b:hover {
+    opacity: 1 !important;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.btn-a.pressed, .btn-b.pressed {
+    transform: scale(0.95);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+/* Botones L, R (hombros) */
+.shoulder-buttons {
+    position: absolute;
+    top: 8%;
+    left: 15%;
+    right: 15%;
+    display: flex;
+    justify-content: space-between;
+    width: 70%;
+}
+
+.btn-l, .btn-r {
+    width: 8%;
+    padding: 8px;
+    background: rgba(100, 100, 100, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    opacity: 0;
+}
+
+.btn-l:hover, .btn-r:hover {
+    background: rgba(150, 150, 150, 0.9);
+    opacity: 1 !important;
+}
+
+.btn-l.pressed, .btn-r.pressed {
+    background: rgba(200, 200, 255, 0.8);
+    transform: translateY(2px);
+}
+
+/* Botones de control (Start, Select) */
+.control-buttons {
+    position: absolute;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8%;
+    width: 25%;
+}
+
+.btn-start, .btn-select {
+    flex: 1;
+    padding: 6px;
+    background: rgba(80, 80, 80, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    color: #fff;
+    font-size: 0.8em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    opacity: 0;
+}
+
+.btn-start:hover, .btn-select:hover {
+    background: rgba(120, 120, 120, 0.9);
+    opacity: 1 !important;
+}
+
+.btn-start.pressed, .btn-select.pressed {
+    background: rgba(150, 200, 100, 0.7);
+    transform: translateY(2px);
+}
+
+/* Botón Power */
+.btn-power {
+    position: absolute;
+    top: 12%;
+    right: 8%;
+    width: 5%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #90EE90, #228B22);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+    box-shadow: 0 0 10px rgba(144, 238, 144, 0.6);
+}
+
+.btn-power:hover {
+    transform: scale(1.1);
+    opacity: 1 !important;
+}
+
+.btn-power.on {
+    background: radial-gradient(circle at 30% 30%, #FF6B6B, #8B0000);
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+}
+
+/* Control de volumen */
+.volume-control {
+    position: absolute;
+    bottom: 5%;
+    right: 8%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.volume-mute {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    text-align: center;
+    opacity: 0;
+}
+
+.volume-slider {
+    width: 80px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.volume-control:hover .volume-mute,
+.volume-control:hover .volume-slider {
+    opacity: 1;
+}
+
+/* Overlay interactive buttons - solo volumen */
+.overlay-btn {
+    position: absolute;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.0);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.overlay-btn:hover {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    border-color: rgba(255,255,255,0.12);
+}
+
+/* Volumen - único overlay funcional */
+.overlay-volume { left: 4.6%; top: 23.3%; width: 6.5%; height: 4.6%; }
+
+/* Modales */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: #2d2d2d;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 18px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 20px;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-close-btn {
+    background: rgba(150, 150, 150, 0.8);
+}
+
+.saves-list, .keymap-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.save-slot, .keymap-item {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.keymap-item {
+    flex-wrap: wrap;
+}
+
+.keymap-item .key-label {
+    min-width: 120px;
+    font-weight: bold;
+}
+
+.keymap-item input {
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    color: #fff;
+    width: 80px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .gba-device {
+        aspect-ratio: auto;
+        max-width: 600px;
+    }
+
+    .control-panel {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .panel-left, .panel-center, .panel-right {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .gba-device {
+        max-width: 400px;
+        aspect-ratio: 360 / 200;
+    }
+
+    .control-panel {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .btn-primary, .btn-secondary {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+}
+
+@media (max-width: 480px) {
+    .gba-device {
+        max-width: 100%;
+        aspect-ratio: 360 / 200;
+    }
+
+    .game-title {
+        display: none;
+    }
+
+    .panel-left, .panel-center, .panel-right {
+        gap: 5px;
+    }
+
+    .btn-primary, .btn-secondary {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+}

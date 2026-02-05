@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate GBA Image</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = 1080;
+        canvas.height = 600;
+        
+        // Fondo azul GBA
+        ctx.fillStyle = '#4B4BA8';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Pantalla LCD - marco exterior
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 8;
+        ctx.fillStyle = '#1A1A2E';
+        ctx.fillRect(240, 120, 600, 360);
+        ctx.strokeRect(240, 120, 600, 360);
+        
+        // Brillo en pantalla (efecto realista)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(245, 125, 590, 30);
+        
+        // D-Pad (izquierda)
+        ctx.fillStyle = '#5A5A8A';
+        ctx.fillRect(100, 330, 120, 40); // Horizontal
+        ctx.fillRect(130, 300, 40, 120); // Vertical
+        
+        // D-Pad center
+        ctx.fillStyle = '#2A2A5A';
+        ctx.beginPath();
+        ctx.arc(160, 350, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Botones A y B (derecha)
+        // B (azul) - arriba
+        ctx.fillStyle = '#6B94FF';
+        ctx.beginPath();
+        ctx.arc(960, 280, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#00008B';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('B', 960, 290);
+        
+        // A (rojo) - abajo
+        ctx.fillStyle = '#FF6B6B';
+        ctx.beginPath();
+        ctx.arc(960, 380, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#8B0000';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('A', 960, 390);
+        
+        // Botones L y R (hombros)
+        ctx.fillStyle = '#6A6A9A';
+        ctx.strokeStyle = '#3A3A5A';
+        ctx.lineWidth = 3;
+        // L
+        ctx.fillRect(200, 30, 180, 50);
+        ctx.strokeRect(200, 30, 180, 50);
+        // R
+        ctx.fillRect(700, 30, 180, 50);
+        ctx.strokeRect(700, 30, 180, 50);
+        
+        // START y SELECT
+        ctx.fillStyle = '#5A5A7A';
+        ctx.lineWidth = 2;
+        // SELECT
+        ctx.fillRect(400, 500, 120, 60);
+        ctx.strokeRect(400, 500, 120, 60);
+        // START
+        ctx.fillRect(560, 500, 120, 60);
+        ctx.strokeRect(560, 500, 120, 60);
+        
+        // Texto SELECT y START
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('SELECT', 460, 535);
+        ctx.fillText('START', 620, 535);
+        
+        // Botón Power (arriba derecha)
+        ctx.fillStyle = '#90EE90';
+        ctx.beginPath();
+        ctx.arc(1000, 60, 25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#228B22';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('●', 1000, 68);
+        
+        // Parlantes
+        ctx.strokeStyle = '#3A3A5A';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+            const y = 150 + i * 50;
+            ctx.strokeRect(60, y, 60, 30);
+        }
+        
+        // Logo Nintendo
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 28px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Nintendo', 540, 50);
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('GAME BOY ADVANCE', 540, 90);
+        
+        // Convertir a PNG y descargar
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gba-device.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            console.log('✅ Imagen descargada como gba-device.png');
+        }, 'image/png');
+    </script>
+</body>
+</html>

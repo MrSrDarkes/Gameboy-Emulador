@@ -35,7 +35,8 @@ let emulatorState = {
     isMuted: false,
     gameSpeed: 1,
     audioContext: null,
-    audioNodes: {}
+    audioNodes: {},
+    canvasObserver: null
 };
 
 // ==================== DOM ELEMENTOS ====================
@@ -49,6 +50,7 @@ const DOM = {
     resumeBtn: document.getElementById('resumeBtn'),
     fullscreenBtn: document.getElementById('fullscreenBtn'),
     powerBtn: document.getElementById('powerBtn'),
+    powerLed: document.getElementById('powerLed'),
     muteBtn: document.getElementById('muteBtn'),
     volumeSlider: document.getElementById('volumeSlider'),
     gbaDevice: document.querySelector('.gba-device')
@@ -62,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadVolumeFromStorage();
     setupEventListeners();
     setupButtonEvents();
+    updatePowerLed();
     console.log('✅ Game Boy Advance Emulator iniciado');
 });
 
@@ -105,9 +108,6 @@ function setupEventListeners() {
     // Touch input
     setupTouchControls();
 
-    // Overlay volume button
-    const overlayVolume = document.getElementById('overlayVolume');
-    if (overlayVolume) overlayVolume.addEventListener('click', toggleMute);
 }
 
 function setupButtonEvents() {
@@ -215,6 +215,7 @@ async function handleRomLoad(e) {
         DOM.gameTitle.textContent = `🎮 ${emulatorState.currentGameTitle}`;
         DOM.pauseBtn.disabled = false;
         DOM.resumeBtn.disabled = true;
+        updatePowerLed();
 
         const sizeKb = (file.size / 1024).toFixed(1);
         console.log(`📦 ROM cargada: ${emulatorState.currentGameTitle} (${sizeKb} KB)`);
@@ -242,6 +243,7 @@ async function handleRomLoad(e) {
         script.src = './data/loader.js';
         script.onload = () => {
             console.log('✅ EmulatorJS cargado y ROM iniciada');
+            startEmulatorCanvasObserver();
         };
         script.onerror = () => {
             console.error('❌ Error cargando EmulatorJS');
@@ -264,6 +266,7 @@ function startEmulation() {
     emulatorState.isPaused = false;
     DOM.pauseBtn.disabled = false;
     DOM.resumeBtn.disabled = true;
+    updatePowerLed();
     console.log('▶️ Emulación iniciada');
 }
 
@@ -271,6 +274,7 @@ function pauseGame() {
     emulatorState.isPaused = true;
     DOM.pauseBtn.disabled = true;
     DOM.resumeBtn.disabled = false;
+    updatePowerLed();
     console.log('⏸ Emulación pausada');
 }
 
@@ -278,6 +282,7 @@ function resumeGame() {
     emulatorState.isPaused = false;
     DOM.pauseBtn.disabled = false;
     DOM.resumeBtn.disabled = true;
+    updatePowerLed();
     console.log('▶️ Emulación reanudada');
 }
 
@@ -286,6 +291,7 @@ function togglePower() {
         if (emulatorState.isRunning) {
             emulatorState.isRunning = false;
             emulatorState.isPaused = false;
+            updatePowerLed();
             console.log('🔴 Emulación detenida');
         } else {
             startEmulation();
@@ -352,6 +358,14 @@ function normalizeKeymap(keymap) {
 }
 
 function cleanupEmulator() {
+    if (emulatorState.canvasObserver) {
+        emulatorState.canvasObserver.disconnect();
+        emulatorState.canvasObserver = null;
+    }
+    emulatorState.isRunning = false;
+    emulatorState.isPaused = false;
+    emulatorState.gameLoaded = false;
+    updatePowerLed();
     const existingPlayer = document.getElementById('ejs-player');
     if (existingPlayer) {
         existingPlayer.remove();
@@ -363,6 +377,64 @@ function cleanupEmulator() {
     if (emulatorState.currentRomUrl) {
         URL.revokeObjectURL(emulatorState.currentRomUrl);
         emulatorState.currentRomUrl = null;
+    }
+}
+
+function updatePowerLed() {
+    if (!DOM.powerLed) return;
+    const isOn = emulatorState.isRunning === true;
+    DOM.powerLed.classList.toggle('on', isOn);
+    DOM.powerLed.classList.toggle('off', !isOn);
+}
+
+function startEmulatorCanvasObserver() {
+    const player = document.getElementById('ejs-player');
+    if (!player) return;
+
+    constrainEmulatorCanvas();
+
+    emulatorState.canvasObserver = new MutationObserver(() => {
+        constrainEmulatorCanvas();
+    });
+
+    emulatorState.canvasObserver.observe(player, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class', 'width', 'height']
+    });
+}
+
+function constrainEmulatorCanvas() {
+    const player = document.getElementById('ejs-player');
+    if (!player) return;
+
+    player.style.overflow = 'hidden';
+
+    const canvasParent =
+        player.querySelector('.ej._canva._parent') ||
+        player.querySelector('[class*="_canva"]') ||
+        player.querySelector('[class*="ejs_parent"]');
+
+    if (canvasParent) {
+        canvasParent.style.position = 'absolute';
+        canvasParent.style.top = '0';
+        canvasParent.style.left = '0';
+        canvasParent.style.width = '100%';
+        canvasParent.style.height = '100%';
+        canvasParent.style.margin = '0';
+        canvasParent.style.padding = '0';
+    }
+
+    const canvas = player.querySelector('canvas');
+    if (canvas) {
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.maxWidth = '100%';
+        canvas.style.maxHeight = '100%';
     }
 }
 

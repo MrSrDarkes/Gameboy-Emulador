@@ -112,19 +112,57 @@ body {
 }
 
 .emulator-screen {
-    position: absolute;
-    left: 22.2222%;
-    right: 22.2222%;
-    top: 16.6667%;
-    bottom: 16.6667%;
+    position: absolute !important;
+    left: 22.2222% !important;
+    right: 22.2222% !important;
+    top: 16.6667% !important;
+    bottom: 16.6667% !important;
     border-radius: 2px;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* EmulatorJS puede forzar tamaño completo: lo anulamos */
+.emulator-screen.ejs_parent,
+.emulator-screen.ejs_big_screen {
+    position: absolute !important;
+    left: 22.2222% !important;
+    right: 22.2222% !important;
+    top: 16.6667% !important;
+    bottom: 16.6667% !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+}
+
+/* Contenedor del canvas de EmulatorJS: forzar que quede dentro de la pantalla del GBA */
+.emulator-screen .ej._canva._parent,
+.emulator-screen [class*="ejs_parent"],
+.emulator-screen [class*="_canva"] {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .emulator-screen canvas,
+.emulator-screen .ejs_canvas,
+.emulator-screen canvas.ej._canva,
 .emulator-screen iframe {
-    width: 100%;
-    height: 100%;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
 }
@@ -206,44 +244,11 @@ body {
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
-/* Botones L, R (hombros) */
-.shoulder-buttons {
-    position: absolute;
-    top: 8%;
-    left: 15%;
-    right: 15%;
-    display: flex;
-    justify-content: space-between;
-    width: 70%;
-}
-
-.btn-l, .btn-r {
-    width: 8%;
-    padding: 8px;
-    background: rgba(100, 100, 100, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.1s ease;
-    opacity: 0;
-}
-
-.btn-l:hover, .btn-r:hover {
-    background: rgba(150, 150, 150, 0.9);
-    opacity: 1 !important;
-}
-
-.btn-l.pressed, .btn-r.pressed {
-    background: rgba(200, 200, 255, 0.8);
-    transform: translateY(2px);
-}
 
 /* Botones de control (Start, Select) */
 .control-buttons {
     position: absolute;
-    bottom: 15%;
+    bottom: 6%;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -303,6 +308,33 @@ body {
     box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
 }
 
+/* LED de encendido */
+.power-led {
+    position: absolute;
+    top: 10%;
+    left: 93.5%;
+    width: 3.4%;
+    height: 6%;
+    min-width: 20px;
+    min-height: 20px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 3px solid rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
+}
+
+.power-led.off {
+    background: radial-gradient(circle at 30% 30%, #ff6b6b, #8b0000);
+    border-color: #6b0000;
+    box-shadow: 0 0 12px rgba(255, 80, 80, 0.6);
+}
+
+.power-led.on {
+    background: radial-gradient(circle at 30% 30%, #90ee90, #228b22);
+    border-color: #2a8f2a;
+    box-shadow: 0 0 12px rgba(144, 238, 144, 0.7);
+}
+
 /* Control de volumen */
 .volume-control {
     position: absolute;
@@ -339,22 +371,6 @@ body {
     opacity: 1;
 }
 
-/* Overlay interactive buttons - solo volumen */
-.overlay-btn {
-    position: absolute;
-    background: transparent;
-    border: 2px solid rgba(255,255,255,0.0);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: box-shadow 0.12s ease, border-color 0.12s ease;
-}
-.overlay-btn:hover {
-    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
-    border-color: rgba(255,255,255,0.12);
-}
-
-/* Volumen - único overlay funcional */
-.overlay-volume { left: 4.6%; top: 23.3%; width: 6.5%; height: 4.6%; }
 
 /* Modales */
 .modal {

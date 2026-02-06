@@ -28,16 +28,15 @@
                 <button class="btn btn-b" data-key="x" title="Botón B">B</button>
             </div>
 
-            <div class="shoulder-buttons">
-                <button class="btn btn-l" data-key="q" title="Botón L">L</button>
-                <button class="btn btn-r" data-key="w" title="Botón R">R</button>
-            </div>
 
             <!-- Start y Select (abajo centro) -->
             <div class="control-buttons">
                 <button class="btn btn-select" data-key="backspace" title="Select">SELECT</button>
                 <button class="btn btn-start" data-key="enter" title="Start">START</button>
             </div>
+
+            <!-- LED de encendido (estado de emulación) -->
+            <div id="powerLed" class="power-led off" title="Power"></div>
 
             <!-- Botón Power (arriba derecha) -->
             <button class="btn btn-power" id="powerBtn" title="Encendido/Apagado">●</button>
@@ -48,8 +47,6 @@
                 <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
             </div>
 
-            <!-- Overlay interactivo: solo volumen (funcional) -->
-            <button id="overlayVolume" class="overlay-btn overlay-volume" title="Volumen (mute)"></button>
         </div>
 
         <!-- Panel de control simplificado (solo carga de ROM y controles básicos) -->

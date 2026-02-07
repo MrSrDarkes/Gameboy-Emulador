@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Boy Advance Emulator</title>
+    <link rel="stylesheet" href="gameboy-emulator/styles.css">
+</head>
+<body>
+    <!-- Contenedor principal -->
+    <div class="emulator-container">
+        <!-- GBA Device con imagen de fondo -->
+        <div class="gba-device">
+            <!-- Canvas para el juego -->
+            <canvas id="gameCanvas" class="game-canvas" width="240" height="160"></canvas>
+
+            <!-- D-Pad (izquierda) -->
+            <div class="d-pad">
+                <button class="d-pad-btn d-pad-up" data-key="arrowup" title="Arriba"></button>
+                <button class="d-pad-btn d-pad-down" data-key="arrowdown" title="Abajo"></button>
+                <button class="d-pad-btn d-pad-left" data-key="arrowleft" title="Izquierda"></button>
+                <button class="d-pad-btn d-pad-right" data-key="arrowright" title="Derecha"></button>
+            </div>
+
+            <!-- Botones A, B, L, R (derecha/arriba) -->
+            <div class="action-buttons">
+                <button class="btn btn-a" data-key="z" title="Botón A">A</button>
+                <button class="btn btn-b" data-key="x" title="Botón B">B</button>
+            </div>
+
+
+            <!-- Start y Select (abajo centro) -->
+            <div class="control-buttons">
+                <button class="btn btn-select" data-key="backspace" title="Select">SELECT</button>
+                <button class="btn btn-start" data-key="enter" title="Start">START</button>
+            </div>
+
+            <!-- LED de encendido (estado de emulación) -->
+            <div id="powerLed" class="power-led off" title="Power"></div>
+
+            <!-- Botón Power (arriba derecha) -->
+            <button class="btn btn-power" id="powerBtn" title="Encendido/Apagado">●</button>
+
+            <!-- Control de volumen (integrado) -->
+            <div class="volume-control">
+                <button class="volume-mute" id="muteBtn" title="Silenciar">🔊</button>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+            </div>
+
+        </div>
+
+        <!-- Panel de control simplificado (solo carga de ROM y controles básicos) -->
+        <div class="control-panel">
+            <div class="panel-left">
+                <input type="file" id="romInput" accept=".gba" style="display:none;">
+                <button id="loadRomBtn" class="btn-primary">📥 Cargar ROM</button>
+                <span id="gameTitle" class="game-title">Sin juego</span>
+            </div>
+
+            <div class="panel-right">
+                <button id="pauseBtn" class="btn-secondary" disabled>⏸ Pausa</button>
+                <button id="resumeBtn" class="btn-secondary" disabled>▶ Reanudar</button>
+                <button id="fullscreenBtn" class="btn-secondary">⛶ Fullscreen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (path para EmulatorJS cuando index está en la raíz) -->
+    <script>window.EJS_pathtodata = 'gameboy-emulator/data/';</script>
+    <script src="gameboy-emulator/emulator.js"></script>
+    
+    <!-- EmulatorJS Loader (carga automáticamente todos los componentes) -->
+    <!-- Nota: Se carga dinámicamente cuando se carga una ROM -->
+    <!-- window.EJS_pathtodata apunta a: ./data/ -->
+</body>
+</html>

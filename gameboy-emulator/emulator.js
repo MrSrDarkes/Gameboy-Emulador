@@ -233,14 +233,14 @@ async function handleRomLoad(e) {
         window.EJS_player = '#ejs-player';
         window.EJS_gameUrl = emulatorState.currentRomUrl;
         window.EJS_core = 'gba';
-        window.EJS_pathtodata = './data/';
+        window.EJS_pathtodata = window.EJS_pathtodata || './data/';
         window.EJS_startOnLoaded = true;
         window.EJS_gameName = emulatorState.currentGameTitle;
 
         // Cargar loader.js dinámicamente
         const script = document.createElement('script');
         script.id = 'emulatorjs-loader';
-        script.src = './data/loader.js';
+        script.src = (window.EJS_pathtodata || './data/') + 'loader.js';
         script.onload = () => {
             console.log('✅ EmulatorJS cargado y ROM iniciada');
             startEmulatorCanvasObserver();

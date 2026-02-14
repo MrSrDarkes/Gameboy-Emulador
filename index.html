@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a1a">
     <title>Emulador GBA / Nintendo DS</title>
     <link rel="stylesheet" href="gameboy-emulator/styles.css">
 </head>
@@ -62,6 +63,35 @@
                 <button id="resumeBtn" class="btn-secondary" disabled>▶ Reanudar</button>
                 <button id="fullscreenBtn" class="btn-secondary">⛶ Fullscreen</button>
             </div>
+        </div>
+
+        <!-- Ajustes: shaders y optimización -->
+        <div class="settings-panel">
+            <h3 class="saved-roms-title">⚙️ Ajustes</h3>
+            <div class="settings-row">
+                <label for="shaderSelect" class="settings-label">Shader (efecto de pantalla)</label>
+                <select id="shaderSelect" class="settings-select">
+                    <option value="disabled">Ninguno</option>
+                    <option value="crt-easymode.glslp">CRT fácil</option>
+                    <option value="crt-lottes.glslp">CRT Lottes</option>
+                    <option value="crt-geom.glslp">CRT geom</option>
+                    <option value="zfast-crt.glslp">ZFast CRT</option>
+                    <option value="2xScaleHQ.glslp">2x ScaleHQ</option>
+                    <option value="sabr">SABR</option>
+                </select>
+            </div>
+            <div class="settings-row">
+                <label class="settings-check-label">
+                    <input type="checkbox" id="optThreads" checked>
+                    <span>Usar hilos (mejor rendimiento en multicore)</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- ROMs incluidos (siempre disponibles desde el servidor) -->
+        <div class="saved-roms-panel included-roms-panel">
+            <h3 class="saved-roms-title">🎮 Juegos disponibles</h3>
+            <div id="includedRomsList" class="saved-roms-list"></div>
         </div>
 
         <!-- ROMs guardados (IndexedDB) -->

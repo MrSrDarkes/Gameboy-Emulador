@@ -50,6 +50,90 @@ body {
     margin-left: 10px;
 }
 
+/* ROMs guardados */
+.saved-roms-panel {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 16px;
+    backdrop-filter: blur(8px);
+}
+
+.saved-roms-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: #ccc;
+    font-weight: 600;
+}
+
+.saved-roms-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.saved-rom-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-saved-rom {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-saved-rom:hover {
+    background: rgba(102, 126, 234, 0.4);
+    border-color: rgba(102, 126, 234, 0.6);
+    transform: translateY(-1px);
+}
+
+.saved-rom-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.saved-rom-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #aaa;
+}
+
+.btn-delete-rom {
+    padding: 6px 8px;
+    border: none;
+    border-radius: 4px;
+    background: rgba(255, 80, 80, 0.2);
+    color: #ff9999;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-delete-rom:hover {
+    background: rgba(255, 80, 80, 0.4);
+}
+
+.saved-roms-empty {
+    color: #888;
+    font-size: 13px;
+    margin: 0;
+}
+
 /* Botones generales */
 .btn-primary, .btn-secondary {
     padding: 8px 12px;

@@ -46,6 +46,7 @@ const DOM = {
     romInput: document.getElementById('romInput'),
     loadRomBtn: document.getElementById('loadRomBtn'),
     gameTitle: document.getElementById('gameTitle'),
+    savedRomsList: document.getElementById('savedRomsList'),
     pauseBtn: document.getElementById('pauseBtn'),
     resumeBtn: document.getElementById('resumeBtn'),
     fullscreenBtn: document.getElementById('fullscreenBtn'),
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     setupButtonEvents();
     updatePowerLed();
+    refreshSavedRomsList();
     console.log('✅ Game Boy Advance Emulator iniciado');
 });
 
@@ -192,35 +194,142 @@ function emitButtonEvent(button, state) {
     console.log(`🎮 Botón ${button}: ${state}`);
 }
 
-// ==================== MANEJO DE ROM ====================
-async function handleRomLoad(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+// ==================== INDEXEDDB - ROMs GUARDADOS ====================
+const ROM_STORE = { dbName: 'EmulatorROMsDB', storeName: 'roms' };
 
-    const isGba = file.name.toLowerCase().endsWith('.gba');
-    if (!isGba) {
-        alert('❌ Por favor carga un archivo .gba');
-        return;
-    }
+function openRomDB() {
+    return new Promise((resolve, reject) => {
+        const r = indexedDB.open(ROM_STORE.dbName, 1);
+        r.onerror = () => reject(r.error);
+        r.onsuccess = () => resolve(r.result);
+        r.onupgradeneeded = (e) => {
+            if (!e.target.result.objectStoreNames.contains(ROM_STORE.storeName)) {
+                e.target.result.createObjectStore(ROM_STORE.storeName, { keyPath: 'id' });
+            }
+        };
+    });
+}
 
+function romStorageSave(file, gameTitle, core) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+        try {
+            const db = await openRomDB();
+            const tx = db.transaction(ROM_STORE.storeName, 'readwrite');
+            const store = tx.objectStore(ROM_STORE.storeName);
+            const id = gameTitle + '|' + core;
+            store.put({ id, name: gameTitle, core, data: reader.result });
+            tx.oncomplete = () => {
+                console.log('💾 ROM guardada en la página:', gameTitle);
+                refreshSavedRomsList();
+            };
+        } catch (err) {
+            console.warn('No se pudo guardar la ROM:', err);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function romStorageGet(id) {
+    return new Promise((resolve, reject) => {
+        openRomDB().then(db => {
+            const tx = db.transaction(ROM_STORE.storeName, 'readonly');
+            const req = tx.objectStore(ROM_STORE.storeName).get(id);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        }).catch(reject);
+    });
+}
+
+function romStorageList() {
+    return new Promise((resolve, reject) => {
+        openRomDB().then(db => {
+            const tx = db.transaction(ROM_STORE.storeName, 'readonly');
+            const req = tx.objectStore(ROM_STORE.storeName).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        }).catch(reject);
+    });
+}
+
+function romStorageDelete(id) {
+    return new Promise((resolve, reject) => {
+        openRomDB().then(db => {
+            const tx = db.transaction(ROM_STORE.storeName, 'readwrite');
+            tx.objectStore(ROM_STORE.storeName).delete(id);
+            tx.oncomplete = () => { refreshSavedRomsList(); resolve(); };
+            tx.onerror = () => reject(tx.error);
+        }).catch(reject);
+    });
+}
+
+function refreshSavedRomsList() {
+    if (!DOM.savedRomsList) return;
+    DOM.savedRomsList.innerHTML = '';
+    romStorageList().then(roms => {
+        if (roms.length === 0) {
+            DOM.savedRomsList.innerHTML = '<p class="saved-roms-empty">Aún no hay ROMs guardados. Carga una ROM y se guardará aquí.</p>';
+            return;
+        }
+        roms.forEach(rom => {
+            const wrap = document.createElement('div');
+            wrap.className = 'saved-rom-item';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn-saved-rom';
+            btn.innerHTML = `<span class="saved-rom-name">${rom.name}</span> <span class="saved-rom-badge">${rom.core.toUpperCase()}</span>`;
+            btn.title = 'Jugar';
+            btn.addEventListener('click', () => loadSavedRom(rom.id));
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'btn-delete-rom';
+            del.textContent = '🗑';
+            del.title = 'Eliminar de guardados';
+            del.addEventListener('click', (e) => { e.stopPropagation(); romStorageDelete(rom.id); });
+            wrap.appendChild(btn);
+            wrap.appendChild(del);
+            DOM.savedRomsList.appendChild(wrap);
+        });
+    }).catch(() => {
+        DOM.savedRomsList.innerHTML = '<p class="saved-roms-empty">No se pudo cargar la lista.</p>';
+    });
+}
+
+async function loadSavedRom(id) {
     try {
-        cleanupEmulator();
+        const rom = await romStorageGet(id);
+        if (!rom || !rom.data) return;
+        const blob = new Blob([rom.data]);
+        const url = URL.createObjectURL(blob);
+        startRomFromUrl(url, rom.name, rom.core);
+    } catch (err) {
+        console.error('Error al cargar ROM guardada:', err);
+        alert('No se pudo cargar la ROM guardada.');
+    }
+}
 
-        // Actualizar estado
-        emulatorState.currentRom = file;
-        emulatorState.currentRomUrl = URL.createObjectURL(file);
-        emulatorState.currentGameTitle = file.name.replace(/\.[^/.]+$/, '');
-        emulatorState.gameLoaded = true;
+// ==================== MANEJO DE ROM ====================
+function startRomFromUrl(romUrl, gameTitle, core) {
+    if (emulatorState.currentRomUrl) {
+        try { URL.revokeObjectURL(emulatorState.currentRomUrl); } catch (e) {}
+    }
+    cleanupEmulator();
 
-        DOM.gameTitle.textContent = `🎮 ${emulatorState.currentGameTitle}`;
-        DOM.pauseBtn.disabled = false;
-        DOM.resumeBtn.disabled = true;
-        updatePowerLed();
+    emulatorState.currentRomUrl = romUrl;
+    emulatorState.currentGameTitle = gameTitle;
+    emulatorState.gameLoaded = true;
 
-        const sizeKb = (file.size / 1024).toFixed(1);
-        console.log(`📦 ROM cargada: ${emulatorState.currentGameTitle} (${sizeKb} KB)`);
+    DOM.gameTitle.textContent = `🎮 ${gameTitle}`;
+    DOM.pauseBtn.disabled = false;
+    DOM.resumeBtn.disabled = true;
+    updatePowerLed();
 
-        // Preparar contenedor para EmulatorJS
+    // Esperar un frame para que el DOM termine de quitar el juego anterior (evitar superposición)
+    requestAnimationFrame(() => {
+        // Por si aún quedó algún contenedor viejo
+        const old = document.getElementById('ejs-player');
+        if (old) old.remove();
+
         const gameContainer = document.createElement('div');
         gameContainer.id = 'ejs-player';
         gameContainer.classList.add('emulator-screen');
@@ -229,15 +338,13 @@ async function handleRomLoad(e) {
         DOM.gameCanvas.parentElement.appendChild(gameContainer);
         DOM.gameCanvas.style.display = 'none';
 
-        // Configurar variables globales de EmulatorJS
         window.EJS_player = '#ejs-player';
         window.EJS_gameUrl = emulatorState.currentRomUrl;
-        window.EJS_core = 'gba';
+        window.EJS_core = core;
         window.EJS_pathtodata = window.EJS_pathtodata || './data/';
         window.EJS_startOnLoaded = true;
-        window.EJS_gameName = emulatorState.currentGameTitle;
+        window.EJS_gameName = gameTitle;
 
-        // Cargar loader.js dinámicamente
         const script = document.createElement('script');
         script.id = 'emulatorjs-loader';
         script.src = (window.EJS_pathtodata || './data/') + 'loader.js';
@@ -252,7 +359,28 @@ async function handleRomLoad(e) {
         document.head.appendChild(script);
 
         startEmulation();
-        
+    });
+}
+
+async function handleRomLoad(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const name = file.name.toLowerCase();
+    const isGba = name.endsWith('.gba');
+    const isNds = name.endsWith('.nds');
+    if (!isGba && !isNds) {
+        alert('❌ Por favor carga un archivo .gba (Game Boy Advance) o .nds (Nintendo DS)');
+        return;
+    }
+
+    const core = isNds ? 'nds' : 'gba';
+    const gameTitle = file.name.replace(/\.[^/.]+$/, '');
+
+    try {
+        romStorageSave(file, gameTitle, core);
+        startRomFromUrl(URL.createObjectURL(file), gameTitle, core);
+        e.target.value = '';
     } catch (error) {
         console.error('❌ Error cargando ROM:', error);
         alert('❌ Error al cargar la ROM');
@@ -366,17 +494,40 @@ function cleanupEmulator() {
     emulatorState.isPaused = false;
     emulatorState.gameLoaded = false;
     updatePowerLed();
+
+    // Cerrar instancia anterior de EmulatorJS si existe
+    if (window.EJS_emulator) {
+        try {
+            if (typeof window.EJS_emulator.callEvent === 'function') {
+                window.EJS_emulator.callEvent('exit');
+            }
+        } catch (err) {
+            console.warn('Al cerrar emulador anterior:', err);
+        }
+        window.EJS_emulator = null;
+    }
+
+    // Quitar todo el contenedor del juego anterior (evitar superposición)
     const existingPlayer = document.getElementById('ejs-player');
     if (existingPlayer) {
         existingPlayer.remove();
     }
+    document.querySelectorAll('.gba-device .ejs_parent').forEach(el => el.remove());
+
     const existingLoader = document.getElementById('emulatorjs-loader');
     if (existingLoader) {
         existingLoader.remove();
     }
     if (emulatorState.currentRomUrl) {
-        URL.revokeObjectURL(emulatorState.currentRomUrl);
+        try {
+            URL.revokeObjectURL(emulatorState.currentRomUrl);
+        } catch (e) {}
         emulatorState.currentRomUrl = null;
+    }
+
+    // Mostrar de nuevo el canvas placeholder hasta que cargue el nuevo juego
+    if (DOM.gameCanvas) {
+        DOM.gameCanvas.style.display = '';
     }
 }
 

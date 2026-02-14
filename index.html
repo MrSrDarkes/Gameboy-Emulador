@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Boy Advance Emulator</title>
+    <title>Emulador GBA / Nintendo DS</title>
     <link rel="stylesheet" href="gameboy-emulator/styles.css">
 </head>
 <body>
@@ -52,7 +52,7 @@
         <!-- Panel de control simplificado (solo carga de ROM y controles básicos) -->
         <div class="control-panel">
             <div class="panel-left">
-                <input type="file" id="romInput" accept=".gba" style="display:none;">
+                <input type="file" id="romInput" accept=".gba,.nds" style="display:none;">
                 <button id="loadRomBtn" class="btn-primary">📥 Cargar ROM</button>
                 <span id="gameTitle" class="game-title">Sin juego</span>
             </div>
@@ -62,6 +62,12 @@
                 <button id="resumeBtn" class="btn-secondary" disabled>▶ Reanudar</button>
                 <button id="fullscreenBtn" class="btn-secondary">⛶ Fullscreen</button>
             </div>
+        </div>
+
+        <!-- ROMs guardados (IndexedDB) -->
+        <div class="saved-roms-panel">
+            <h3 class="saved-roms-title">📁 Tus ROMs guardados</h3>
+            <div id="savedRomsList" class="saved-roms-list"></div>
         </div>
     </div>
 

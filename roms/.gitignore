@@ -1,0 +1,7 @@
+# No subir ROMs al repositorio (archivos de juego)
+*.gba
+*.nds
+*.gb
+*.gbc
+*.zip
+*.7z

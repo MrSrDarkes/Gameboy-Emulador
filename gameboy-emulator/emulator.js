@@ -190,6 +190,7 @@ function simulateKeyPress(key) {
 }
 
 function simulateKeyRelease(key) {
+    if (!emulatorState.keyMap[key]) return;
     delete emulatorState.pressedKeys[key];
     emitButtonEvent(emulatorState.keyMap[key], 'up');
 }
@@ -349,7 +350,7 @@ function applyEmulatorSettings() {
 }
 
 // ==================== ROMs INCLUIDOS (lista estática, siempre disponibles) ====================
-const LISTA_ROMs_URL = 'roms/lista.json';
+const LISTA_ROMs_URL = './roms/lista.json';
 
 function loadIncludedRomsList() {
     if (!DOM.includedRomsList) return;

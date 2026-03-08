@@ -56,6 +56,13 @@ body {
     margin-left: 10px;
 }
 
+/* Sección ROMs (guardados + incluidos) */
+.roms-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
 /* ROMs guardados */
 .saved-roms-panel {
     background: rgba(255, 255, 255, 0.08);

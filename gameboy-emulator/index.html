@@ -52,7 +52,7 @@
         <!-- Panel de control simplificado (solo carga de ROM y controles básicos) -->
         <div class="control-panel">
             <div class="panel-left">
-                <input type="file" id="romInput" accept=".gba" style="display:none;">
+                <input type="file" id="romInput" accept=".gba,.nds" style="display:none;">
                 <button id="loadRomBtn" class="btn-primary">📥 Cargar ROM</button>
                 <span id="gameTitle" class="game-title">Sin juego</span>
             </div>
@@ -61,6 +61,35 @@
                 <button id="pauseBtn" class="btn-secondary" disabled>⏸ Pausa</button>
                 <button id="resumeBtn" class="btn-secondary" disabled>▶ Reanudar</button>
                 <button id="fullscreenBtn" class="btn-secondary">⛶ Fullscreen</button>
+            </div>
+        </div>
+
+        <!-- ROMs guardados e incluidos -->
+        <div class="roms-section">
+            <div class="saved-roms-panel">
+                <h3 class="saved-roms-title">Tus ROMs guardados</h3>
+                <div id="savedRomsList" class="saved-roms-list"></div>
+            </div>
+            <div class="saved-roms-panel">
+                <h3 class="saved-roms-title">Juegos incluidos</h3>
+                <div id="includedRomsList" class="saved-roms-list"></div>
+            </div>
+        </div>
+
+        <!-- Ajustes (shader + threads) -->
+        <div class="settings-panel">
+            <div class="settings-row">
+                <label class="settings-label" for="shaderSelect">Shader de video</label>
+                <select id="shaderSelect" class="settings-select">
+                    <option value="disabled">Sin shader</option>
+                    <option value="default">Por defecto</option>
+                </select>
+            </div>
+            <div class="settings-row">
+                <label class="settings-check-label">
+                    <input type="checkbox" id="optThreads" checked>
+                    Usar hilos (mejor rendimiento en algunos núcleos)
+                </label>
             </div>
         </div>
     </div>

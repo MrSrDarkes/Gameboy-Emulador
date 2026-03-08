@@ -61,6 +61,8 @@ const DOM = {
 };
 
 // ==================== INICIALIZACIÓN ====================
+const EJS_PENDING_ROM_KEY = 'EJS_pendingRom';
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeCanvas();
     initializeAudio();
@@ -73,6 +75,20 @@ document.addEventListener('DOMContentLoaded', function() {
     loadIncludedRomsList();
     loadEmulatorSettings();
     setupEmulatorSettingsListeners();
+
+    // Si se recargó la página para cambiar de juego (evitar doble carga del loader)
+    try {
+        const pending = sessionStorage.getItem(EJS_PENDING_ROM_KEY);
+        if (pending) {
+            sessionStorage.removeItem(EJS_PENDING_ROM_KEY);
+            const { url, title, core } = JSON.parse(pending);
+            if (url && title && core) {
+                requestAnimationFrame(() => startRomFromUrl(url, title, core));
+            }
+        }
+    } catch (e) {
+        console.warn('No se pudo restaurar ROM pendiente:', e);
+    }
     console.log('✅ Game Boy Advance Emulator iniciado');
 });
 
@@ -346,7 +362,69 @@ function applyEmulatorSettings() {
     const shader = DOM.shaderSelect ? DOM.shaderSelect.value : 'disabled';
     window.EJS_defaultOptions = window.EJS_defaultOptions || {};
     window.EJS_defaultOptions.shader = shader === 'disabled' ? 'disabled' : shader;
-    window.EJS_threads = DOM.optThreads ? DOM.optThreads.checked : true;
+    // Desactivar threads si SharedArrayBuffer no está disponible (ej. GitHub Pages sin COOP/COEP)
+    const threadsPref = DOM.optThreads ? DOM.optThreads.checked : true;
+    const threadsAvailable = typeof SharedArrayBuffer !== 'undefined';
+    window.EJS_threads = threadsPref && threadsAvailable;
+    if (!threadsAvailable && DOM.optThreads) DOM.optThreads.checked = false;
+}
+
+/** Construye el objeto config para EmulatorJS (mismo formato que el loader). Usado al cargar una 2ª ROM sin recargar scripts. */
+function buildEJSConfig() {
+    const scriptPath = window.EJS_pathtodata || './data/';
+    const config = {
+        gameUrl: window.EJS_gameUrl,
+        dataPath: scriptPath,
+        system: window.EJS_core,
+        biosUrl: window.EJS_biosUrl,
+        gameName: window.EJS_gameName,
+        color: window.EJS_color,
+        adUrl: window.EJS_AdUrl,
+        adMode: window.EJS_AdMode,
+        adTimer: window.EJS_AdTimer,
+        adSize: window.EJS_AdSize,
+        alignStartButton: window.EJS_alignStartButton,
+        VirtualGamepadSettings: window.EJS_VirtualGamepadSettings,
+        buttonOpts: window.EJS_Buttons,
+        volume: window.EJS_volume,
+        defaultControllers: window.EJS_defaultControls,
+        startOnLoad: window.EJS_startOnLoaded,
+        fullscreenOnLoad: window.EJS_fullscreenOnLoaded,
+        filePaths: window.EJS_paths,
+        loadState: window.EJS_loadStateURL,
+        cacheLimit: window.EJS_CacheLimit,
+        cheats: window.EJS_cheats,
+        defaultOptions: window.EJS_defaultOptions,
+        gamePatchUrl: window.EJS_gamePatchUrl,
+        gameParentUrl: window.EJS_gameParentUrl,
+        netplayUrl: window.EJS_netplayServer,
+        netplayICEServers: window.EJS_netplayICEServers,
+        gameId: window.EJS_gameID,
+        backgroundImg: window.EJS_backgroundImage,
+        backgroundBlur: window.EJS_backgroundBlur,
+        backgroundColor: window.EJS_backgroundColor,
+        controlScheme: window.EJS_controlScheme,
+        threads: window.EJS_threads,
+        disableCue: window.EJS_disableCue,
+        startBtnName: window.EJS_startButtonName,
+        softLoad: window.EJS_softLoad,
+        capture: window.EJS_screenCapture,
+        externalFiles: window.EJS_externalFiles,
+        dontExtractRom: window.EJS_dontExtractRom,
+        dontExtractBIOS: window.EJS_dontExtractBIOS,
+        disableDatabases: window.EJS_disableDatabases,
+        disableLocalStorage: window.EJS_disableLocalStorage,
+        forceLegacyCores: window.EJS_forceLegacyCores,
+        noAutoFocus: window.EJS_noAutoFocus,
+        videoRotation: window.EJS_videoRotation,
+        hideSettings: window.EJS_hideSettings,
+        browserMode: window.EJS_browserMode,
+        shaders: Object.assign({}, window.EJS_SHADERS || {}, window.EJS_shaders || {}),
+        fixedSaveInterval: window.EJS_fixedSaveInterval,
+        disableAutoUnload: window.EJS_disableAutoUnload,
+        disableBatchBootup: window.EJS_disableBatchBootup
+    };
+    return config;
 }
 
 // ==================== ROMs INCLUIDOS (lista estática, siempre disponibles) ====================
@@ -422,20 +500,46 @@ function startRomFromUrl(romUrl, gameTitle, core) {
         window.EJS_gameName = gameTitle;
         applyEmulatorSettings();
 
+        // Si EmulatorJS ya está cargado (2ª ROM), reutilizar sin inyectar el loader
+        if (typeof window.EmulatorJS === 'function') {
+            try {
+                window.EJS_emulator = new window.EmulatorJS(window.EJS_player, buildEJSConfig());
+                console.log('✅ Nueva ROM iniciada (reutilizando EmulatorJS)');
+                startEmulatorCanvasObserver();
+                startEmulation();
+            } catch (err) {
+                console.error('❌ Error al iniciar ROM:', err);
+                alert('Error al cambiar de juego. Prueba recargando la página.');
+            }
+            return;
+        }
+
+        // El loader ya se inyectó una vez pero emulator.min.js no expone EmulatorJS → no volver a inyectar (evita "EJS_GameManager already declared")
+        if (window.__EJS_loaderInjected) {
+            if (romUrl.startsWith('blob:')) {
+                alert('Para cambiar a otro juego cargado desde tu PC, recarga la página (F5) y vuelve a cargar el juego.');
+                return;
+            }
+            sessionStorage.setItem(EJS_PENDING_ROM_KEY, JSON.stringify({ url: romUrl, title: gameTitle, core }));
+            location.reload();
+            return;
+        }
+
+        window.__EJS_loaderInjected = true;
         const script = document.createElement('script');
         script.id = 'emulatorjs-loader';
         script.src = (window.EJS_pathtodata || './data/') + 'loader.js';
         script.onload = () => {
             console.log('✅ EmulatorJS cargado y ROM iniciada');
             startEmulatorCanvasObserver();
+            startEmulation();
         };
         script.onerror = () => {
+            window.__EJS_loaderInjected = false;
             console.error('❌ Error cargando EmulatorJS');
             alert('❌ Error cargando EmulatorJS. Verifica que la carpeta data/ existe.');
         };
         document.head.appendChild(script);
-
-        startEmulation();
     });
 }
 
